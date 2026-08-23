@@ -1,0 +1,1960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SENTINEL-X :: Cybersecurity Terminal</title>
+<link rel="icon" type="image/webp" href="https://tr.rbxcdn.com/180DAY-799144245728b5f8a735557862faa9b1/420/420/FrontAccessory/Webp/noFilter">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
+<style>
+:root {
+  --bg: #0a0a0a;
+  --bg-panel: #0f0f0f;
+  --bg-elevated: #151515;
+  --bg-hover: #1a1a1a;
+  --border: #1f1f1f;
+  --border-strong: #2a2a2a;
+  --text: #e5e5e5;
+  --text-dim: #888;
+  --text-faint: #555;
+  --accent: #00ff88;
+  --accent-dim: #00cc6a;
+  --accent-glow: rgba(0, 255, 136, 0.15);
+  --warn: #ffaa00;
+  --error: #ff4444;
+  --radius: 10px;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "SF Pro Display", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  overflow: hidden;
+}
+
+/* Subtle CRT scanlines */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 255, 136, 0.015) 0px,
+    rgba(0, 255, 136, 0.015) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Layout */
+.app {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  height: 100vh;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+/* Sidebar */
+.sidebar {
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  background: #0a0a0a;
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 0 20px var(--accent-glow);
+  flex-shrink: 0;
+}
+
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.brand-fallback {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-items: center;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
+  color: #000;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: -0.5px;
+}
+
+.brand-mark.no-img .brand-fallback { display: grid; }
+
+.brand-text h1 {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text);
+}
+
+.brand-text .version {
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+  margin-top: 2px;
+}
+
+.sidebar-section {
+  padding: 16px 12px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebar-section::-webkit-scrollbar { width: 6px; }
+.sidebar-section::-webkit-scrollbar-track { background: transparent; }
+.sidebar-section::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.section-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  padding: 4px 8px 10px;
+}
+
+.model-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.model-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 13px;
+  color: var(--text-dim);
+  border: 1px solid transparent;
+}
+
+.model-item:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.model-item.active {
+  background: rgba(0, 255, 136, 0.06);
+  border-color: rgba(0, 255, 136, 0.2);
+  color: var(--accent);
+}
+
+.model-logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: #fff;
+  padding: 2px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.model-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.model-badge {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  color: var(--text-faint);
+  letter-spacing: 0.5px;
+}
+
+.model-item.active .model-badge {
+  background: rgba(0, 255, 136, 0.15);
+  color: var(--accent);
+}
+
+/* Controls */
+.sidebar-controls {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.control-row:hover { background: var(--bg-hover); }
+
+.control-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.dot.warn { background: var(--warn); }
+
+/* Toggle */
+.toggle {
+  position: relative;
+  width: 34px;
+  height: 20px;
+}
+
+.toggle input { display: none; }
+
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  left: 2px;
+  top: 2px;
+  background: var(--text-dim);
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.toggle input:checked + .toggle-track {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+
+.toggle input:checked + .toggle-track::after {
+  transform: translateX(14px);
+  background: #000;
+}
+
+.btn {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  color: var(--text-dim);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn:hover {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+  background: rgba(0, 255, 136, 0.05);
+}
+
+.btn.danger:hover {
+  border-color: var(--error);
+  color: var(--error);
+  background: rgba(255, 68, 68, 0.05);
+}
+
+/* Main */
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--bg);
+  overflow: hidden; /* FIX: Ensures the chat area scrolls instead of the whole main element */
+  position: relative;
+}
+
+.topbar {
+  padding: 14px 28px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-panel);
+  backdrop-filter: blur(10px);
+}
+
+.topbar-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.menu-btn { display: none; }
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.topbar-title {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.topbar-title span {
+  color: var(--accent);
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.icon-btn:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+/* Chat area */
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0; /* FIX: Allows the flex child to shrink below its content size and trigger the scrollbar */
+}
+
+.chat-area::-webkit-scrollbar { width: 10px; }
+.chat-area::-webkit-scrollbar-track { background: var(--bg); }
+.chat-area::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 5px;
+  border: 2px solid var(--bg);
+}
+.chat-area::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
+
+.messages-wrap {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 32px 28px 120px;
+}
+
+/* Welcome screen */
+.welcome {
+  text-align: center;
+  padding: 60px 20px 40px;
+  animation: fadeInUp 0.6s ease;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.welcome-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: rgba(0, 255, 136, 0.08);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 20px;
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+
+.welcome h1 {
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #fff 0%, #888 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.welcome h1 .accent-text {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.welcome-sub {
+  color: var(--text-dim);
+  font-size: 15px;
+  max-width: 540px;
+  margin: 0 auto 40px;
+  line-height: 1.7;
+}
+
+.skill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.skill-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  padding: 18px;
+  border-radius: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.skill-card:hover {
+  border-color: var(--accent-dim);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 255, 136, 0.08);
+}
+
+.skill-tag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 8px;
+  background: rgba(0, 255, 136, 0.1);
+  color: var(--accent);
+  border-radius: 4px;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.skill-card h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.skill-card p {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+/* Messages */
+.message {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 28px;
+  animation: fadeInUp 0.4s ease;
+}
+
+/* FIX: User message layout (avatar on right, bubble right-aligned) */
+.message.user {
+  flex-direction: row-reverse;
+}
+
+.message.user .message-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.message.user .message-header {
+  justify-content: flex-end;
+}
+
+.message.user .bubble {
+  background: rgba(0, 255, 136, 0.06);
+  border: 1px solid rgba(0, 255, 136, 0.18);
+  padding: 12px 16px;
+  border-radius: 16px 16px 4px 16px;
+  max-width: 85%;
+  text-align: left;
+}
+
+.message.user .message-actions {
+  justify-content: flex-end;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  color: var(--text-dim);
+}
+
+.message.user .avatar {
+  background: linear-gradient(135deg, #333 0%, #222 100%);
+  color: #fff;
+  border-color: #444;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 7px;
+  object-fit: contain;
+  background: #fff;
+  padding: 2px;
+}
+
+.message-body {
+  flex: 1;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.message-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.message-header .model-tag {
+  font-size: 10px;
+  color: var(--accent);
+  font-family: 'SF Mono', Monaco, monospace;
+  padding: 1px 6px;
+  background: rgba(0, 255, 136, 0.08);
+  border-radius: 4px;
+}
+
+.bubble {
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.7;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Reasoning block */
+.reasoning-block {
+  margin-bottom: 16px;
+  border: 1px solid rgba(255, 170, 0, 0.15);
+  background: rgba(255, 170, 0, 0.03);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.reasoning-header {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--warn);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: background 0.15s;
+}
+
+.reasoning-header:hover {
+  background: rgba(255, 170, 0, 0.05);
+}
+
+.reasoning-chevron {
+  transition: transform 0.2s;
+  font-size: 10px;
+}
+
+.reasoning-block.open .reasoning-chevron {
+  transform: rotate(90deg);
+}
+
+.reasoning-body {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--text-dim);
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  max-height: 320px;
+  overflow-y: auto;
+  border-top: 1px solid rgba(255, 170, 0, 0.1);
+  display: none;
+}
+
+.reasoning-block.open .reasoning-body {
+  display: block;
+}
+
+/* Message actions */
+.message-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.message:hover .message-actions {
+  opacity: 1;
+}
+
+.msg-btn {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.msg-btn:hover {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+}
+
+/* Typing indicator */
+.typing-dots {
+  display: inline-flex;
+  gap: 4px;
+  padding: 6px 0;
+}
+
+.typing-dots span {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: typing 1.2s infinite;
+}
+
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing {
+  0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+  30% { opacity: 1; transform: scale(1); }
+}
+
+/* Markdown styles */
+.bubble h1, .bubble h2, .bubble h3 {
+  margin: 20px 0 10px;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.bubble h1 { font-size: 22px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+.bubble h2 { font-size: 18px; }
+.bubble h3 { font-size: 16px; color: var(--accent); }
+
+.bubble p { margin-bottom: 12px; }
+
+.bubble ul, .bubble ol {
+  margin: 8px 0 12px 22px;
+}
+
+.bubble li { margin-bottom: 4px; }
+
+.bubble strong { color: var(--text); font-weight: 700; }
+.bubble em { color: var(--warn); font-style: italic; }
+
+.bubble a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0, 255, 136, 0.3);
+  transition: border-color 0.15s;
+}
+
+.bubble a:hover { border-bottom-color: var(--accent); }
+
+.bubble pre {
+  background: #050505;
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--accent);
+  padding: 14px 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 12px 0;
+  font-size: 13px;
+  position: relative;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
+}
+
+.bubble code {
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
+  background: rgba(0, 255, 136, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--accent);
+  font-size: 0.9em;
+}
+
+.bubble pre code {
+  background: transparent;
+  padding: 0;
+  color: var(--text);
+}
+
+.bubble blockquote {
+  border-left: 3px solid var(--warn);
+  padding: 4px 16px;
+  color: var(--text-dim);
+  margin: 12px 0;
+  font-style: italic;
+  background: rgba(255, 170, 0, 0.03);
+  border-radius: 0 6px 6px 0;
+}
+
+.bubble table {
+  border-collapse: collapse;
+  margin: 12px 0;
+  width: 100%;
+  font-size: 13px;
+}
+
+.bubble th, .bubble td {
+  border: 1px solid var(--border-strong);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.bubble th {
+  background: var(--bg-elevated);
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.bubble hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 16px 0;
+}
+
+.code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: 'SF Mono', Monaco, monospace;
+}
+
+.code-copy-btn {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-dim);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.code-copy-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+}
+
+.bubble pre.with-header {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  margin-top: 0;
+}
+
+/* FIX: jump-to-latest button */
+.jump-bottom {
+  position: absolute;
+  bottom: 175px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  color: var(--text-dim);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  z-index: 50;
+  font-size: 14px;
+}
+
+.jump-bottom.show {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateX(-50%) translateY(0);
+}
+
+.jump-bottom:hover {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+  box-shadow: 0 0 15px var(--accent-glow);
+}
+
+/* Input area */
+.input-area {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 28px 24px;
+  background: linear-gradient(to top, var(--bg) 70%, transparent);
+  pointer-events: none;
+}
+
+.input-wrap {
+  max-width: 820px;
+  margin: 0 auto;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  padding: 12px;
+  transition: all 0.2s ease;
+  pointer-events: all;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.input-wrap:focus-within {
+  border-color: var(--accent-dim);
+  box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.08), 0 -4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.input-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: var(--text-faint);
+  letter-spacing: 0.5px;
+  flex-wrap: wrap;
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: 'SF Mono', Monaco, monospace;
+  font-size: 10px;
+}
+
+.meta-chip.active {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+  background: rgba(0, 255, 136, 0.05);
+}
+
+.meta-chip .dot-mini {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text-faint);
+}
+
+.meta-chip.active .dot-mini {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+
+#userInput {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  resize: none;
+  min-height: 24px;
+  max-height: 200px;
+  line-height: 1.5;
+  padding: 4px 0;
+}
+
+#userInput::placeholder {
+  color: var(--text-faint);
+}
+
+.input-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.input-hint {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-family: 'SF Mono', Monaco, monospace;
+}
+
+.send-btn {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.send-btn:hover:not(:disabled) {
+  background: var(--accent-dim);
+  transform: scale(1.05);
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.send-btn:disabled {
+  background: var(--bg-elevated);
+  color: var(--text-faint);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 140px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--bg-panel);
+  border: 1px solid var(--accent-dim);
+  color: var(--accent);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 12px;
+  z-index: 10000;
+  opacity: 0;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow);
+  font-family: 'SF Mono', Monaco, monospace;
+  letter-spacing: 0.5px;
+}
+
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.toast.error {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+/* Mobile drawer */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+
+.sidebar-backdrop.show {
+  opacity: 1;
+  pointer-events: all;
+}
+
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .menu-btn { display: grid; }
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 280px;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    display: flex;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+  }
+  .messages-wrap { padding: 20px 16px 120px; }
+  .input-area { padding: 12px 16px 20px; }
+  .jump-bottom { bottom: 150px; }
+  .welcome h1 { font-size: 32px; }
+  .welcome { padding: 40px 16px 20px; }
+  .topbar { padding: 12px 16px; }
+  .skill-grid { grid-template-columns: 1fr; }
+}
+
+@media (min-width: 1800px) {
+  .app { max-width: 1800px; }
+  .messages-wrap { max-width: 900px; }
+  .input-wrap { max-width: 900px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="brand-mark" id="brandMark">
+          <img src="https://tr.rbxcdn.com/180DAY-799144245728b5f8a735557862faa9b1/420/420/FrontAccessory/Webp/noFilter" alt="SENTINEL-X" onerror="this.remove(); document.getElementById('brandMark').classList.add('no-img');">
+          <span class="brand-fallback">SX</span>
+        </div>
+        <div class="brand-text">
+          <h1>SENTINEL-X</h1>
+          <div class="version">TERMINAL // V3.8</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-title">Models</div>
+      <div class="model-list" id="modelList"></div>
+    </div>
+
+    <div class="sidebar-controls">
+      <div class="control-row">
+        <div class="control-label">
+          <span class="dot warn"></span>
+          <span>Deep Think</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="deepThinkToggle">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div class="control-row">
+        <div class="control-label">
+          <span class="dot"></span>
+          <span>Audio Feedback</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="soundToggle" checked>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <button class="btn" id="exportBtn">
+        <span>Export Session</span>
+      </button>
+      <button class="btn danger" id="clearBtn">
+        <span>Clear Session</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="sidebar-backdrop" id="backdrop"></div>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-info">
+        <button class="icon-btn menu-btn" id="menuBtn" title="Menu">&#8801;</button>
+        <div class="status-indicator"></div>
+        <div class="topbar-title">
+          <span id="currentModelDisplay">QWEN 3.8 MAX PREVIEW</span> // SECURE LINK
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="newChatBtn" title="New Session">+</button>
+      </div>
+    </div>
+
+    <div class="chat-area" id="chatArea">
+      <div class="messages-wrap" id="messagesWrap">
+        <div class="welcome" id="welcomeScreen">
+          <div class="welcome-badge">CYBERSECURITY MENTOR</div>
+          <h1>SENTINEL-<span class="accent-text">X</span></h1>
+          <p class="welcome-sub">
+            Elite penetration testing, network forensics, cryptography, and defensive security protocols.
+            Select a model from the sidebar to begin your training session.
+          </p>
+          <div class="skill-grid">
+            <div class="skill-card" data-prompt="Explain the TCP 3-way handshake in detail and demonstrate how to detect SYN flood attacks using Wireshark filters, including mitigation strategies">
+              <div class="skill-tag">NETWORK</div>
+              <h3>TCP Forensics</h3>
+              <p>Handshake analysis and SYN flood detection methodologies</p>
+            </div>
+            <div class="skill-card" data-prompt="Walk me through a safe SQL injection lab using DVWA, explaining each payload, the internal mechanism, and full mitigation with prepared statements">
+              <div class="skill-tag">WEB SECURITY</div>
+              <h3>SQLi Lab</h3>
+              <p>OWASP A03 testing with defensive countermeasures</p>
+            </div>
+            <div class="skill-card" data-prompt="Create a comprehensive Nmap scan methodology for a red team engagement including stealth techniques, detection signatures, and defensive countermeasures">
+              <div class="skill-tag">RED TEAM</div>
+              <h3>Reconnaissance</h3>
+              <p>Advanced scanning methodology and evasion</p>
+            </div>
+            <div class="skill-card" data-prompt="Design a SIEM correlation rule to detect lateral movement using Windows Event Logs, including the query logic and alert thresholds">
+              <div class="skill-tag">BLUE TEAM</div>
+              <h3>SIEM Detection</h3>
+              <p>Building correlation rules for threat hunting</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="jump-bottom" id="jumpBottom" title="Jump to latest">&darr;</button>
+
+    <div class="input-area">
+      <div class="input-wrap">
+        <div class="input-meta">
+          <span class="meta-chip active">
+            <span class="dot-mini"></span>
+            <span id="chipModel">qwen3.8-max-preview</span>
+          </span>
+          <span class="meta-chip" id="chipThink">
+            <span class="dot-mini"></span>
+            <span>DEEP THINK: OFF</span>
+          </span>
+          <span class="meta-chip" id="chipStatus">
+            <span class="dot-mini"></span>
+            <span>IDLE</span>
+          </span>
+        </div>
+        <textarea id="userInput" placeholder="Ask about penetration testing, network security, cryptography..." rows="1"></textarea>
+        <div class="input-footer">
+          <div class="input-hint">ENTER to send // SHIFT+ENTER for newline</div>
+          <button class="send-btn" id="sendBtn" disabled>&uarr;</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== CONFIGURATION ===== */
+const CONFIG = {
+  baseURL: 'https://gpt.crax.lol/v1/chat/completions',
+  apiKey: 'crax-gpt',
+  userAgent: 'sentinel-x-terminal/3.8'
+};
+
+const LOGO_WEB = 'https://tr.rbxcdn.com/180DAY-799144245728b5f8a735557862faa9b1/420/420/FrontAccessory/Webp/noFilter';
+const LOGO_QWEN = 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Qwen_logo.svg/250px-Qwen_logo.svg.png';
+const LOGO_DEEPSEEK = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Deepseek-logo-icon.svg/3840px-Deepseek-logo-icon.svg.png';
+const LOGO_GLM = 'https://res.cloudinary.com/dimqqmfx6/image/upload/v1754428555/model_images_new/GLM-4.5_nfhhrn.png';
+const LOGO_KIMI = 'https://upload.wikimedia.org/wikipedia/en/8/87/Kimi-logo-2025.png';
+const LOGO_CLAUDE = 'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/claude-ai.svg';
+const LOGO_GPT = 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/960px-ChatGPT_logo.svg.png';
+
+const MODELS = {
+  'qwen3.8-max-preview': {
+    name: 'Qwen 3.8 Max Preview',
+    display: 'QWEN 3.8 MAX PREVIEW',
+    logo: LOGO_QWEN,
+    badge: 'PREVIEW'
+  },
+  'qwen3.8-max': {
+    name: 'Qwen 3.8 Max',
+    display: 'QWEN 3.8 MAX',
+    logo: LOGO_QWEN,
+    badge: 'STABLE'
+  },
+  'deepseek-v4-pro': {
+    name: 'DeepSeek V4 Pro',
+    display: 'DEEPSEEK V4 PRO',
+    logo: LOGO_DEEPSEEK,
+    badge: 'PRO'
+  },
+  'glm-5.3': {
+    name: 'GLM 5.3',
+    display: 'GLM 5.3',
+    logo: LOGO_GLM,
+    badge: 'THINK'
+  },
+  'glm-5.2': {
+    name: 'GLM 5.2',
+    display: 'GLM 5.2',
+    logo: LOGO_GLM,
+    badge: 'THINK'
+  },
+  'kimi-k3': {
+    name: 'Kimi K3',
+    display: 'KIMI K3',
+    logo: LOGO_KIMI,
+    badge: 'THINK'
+  },
+  'kimi-k2-7-code': {
+    name: 'Kimi K2 7 Code',
+    display: 'KIMI K2 7 CODE',
+    logo: LOGO_KIMI,
+    badge: 'CODE'
+  },
+  'claude-opus-5': {
+    name: 'Claude Opus 5',
+    display: 'CLAUDE OPUS 5',
+    logo: LOGO_CLAUDE,
+    badge: 'PRO'
+  },
+  'gpt-5-6-sol': {
+    name: 'GPT 5.6 Sol',
+    display: 'GPT 5.6 SOL',
+    logo: LOGO_GPT,
+    badge: 'PRO'
+  }
+};
+
+const SYSTEM_PROMPT = `You are SENTINEL-X, an elite cybersecurity mentor AI. You identify yourself clearly at the start of substantive responses, stating which specific AI model is responding (e.g., "SENTINEL-X via [model name]").
+
+Role: You are a senior penetration tester, network security engineer, red team specialist, blue team defender, malware analyst, and security researcher with extensive real-world experience.
+
+Mission: Teach cybersecurity, networking, and penetration testing with maximum technical depth. Help the user understand how systems work, how vulnerabilities occur, how security professionals analyze them, and how defenders build secure systems.
+
+Communication style:
+- Be precise, technical, and detailed
+- Never give shallow explanations
+- Explain concepts from beginner to expert level
+- Break complex topics into clear steps
+- Explain the reason behind every command, configuration, and technique
+- Use practical examples, workflows, and labs
+- Tone: professional, clinical, slightly terminal-like
+
+Core knowledge areas:
+- Networking: OSI, TCP/IP, IPv4/IPv6, subnetting, MAC, ARP, DNS, DHCP, NAT, routing, switching, VLAN, OSPF, firewalls, VPN, troubleshooting
+- Linux/Windows: administration, internals, permissions, processes, services, logs, hardening
+- Cybersecurity: principles, threat modeling, risk assessment, vulnerability management, authentication, authorization, encryption, hashing, secure architecture, monitoring
+- Penetration Testing: recon, asset discovery, enumeration, vulnerability assessment, web/API testing, network testing, reporting, remediation
+- Web Security: OWASP Top 10, SQLi, XSS, CSRF, SSRF, auth flaws, access control, secure coding
+- Tools: Nmap, Wireshark, Burp Suite, Netcat, Gobuster, Metasploit, Ghidra, IDA, Hashcat, John the Ripper, SIEM tools
+
+For every topic use this structure:
+1. Concept explanation
+2. Internal mechanism
+3. Real-world example
+4. Lab environment example
+5. Defensive techniques
+6. Common mistakes
+7. Advanced notes
+
+When providing commands: explain every flag, expected output, and troubleshooting steps. Prefer safe lab environments (CTFs, VMs, authorized targets).
+
+Ethical Framework (White-Hat): ALWAYS approach security from an ethical, defensive perspective. When discussing exploits, vulnerabilities, or attack vectors, SIMULTANEOUSLY provide mitigation strategies, patch details, and defensive architecture.
+
+Formatting: Heavily use Markdown. Use code blocks for all syntax, bullet points for methodologies, and bold text for critical warnings.`;
+
+/* ===== STATE ===== */
+let currentModel = 'qwen3.8-max-preview';
+let conversationHistory = [{ role: 'system', content: SYSTEM_PROMPT }];
+let isGenerating = false;
+let audioCtx = null;
+
+/* ===== DOM REFS ===== */
+const $ = id => document.getElementById(id);
+const messagesWrap = $('messagesWrap');
+const chatArea = $('chatArea');
+const userInput = $('userInput');
+const sendBtn = $('sendBtn');
+const deepThinkToggle = $('deepThinkToggle');
+const soundToggle = $('soundToggle');
+const modelList = $('modelList');
+const currentModelDisplay = $('currentModelDisplay');
+const chipModel = $('chipModel');
+const chipThink = $('chipThink');
+const chipStatus = $('chipStatus');
+const toast = $('toast');
+const sidebarEl = $('sidebar');
+const backdrop = $('backdrop');
+const menuBtn = $('menuBtn');
+const jumpBtn = $('jumpBottom');
+
+/* ===== UTILITIES ===== */
+function showToast(msg, type = 'success') {
+  toast.textContent = msg;
+  toast.classList.toggle('error', type === 'error');
+  toast.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function playBeep() {
+  if (!soundToggle.checked) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.2);
+  } catch (e) { /* silent */ }
+}
+
+function escapeHtml(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+function setStatus(text, active) {
+  chipStatus.querySelector('span:last-child').textContent = text;
+  chipStatus.classList.toggle('active', !!active);
+}
+
+function friendlyError(status, text) {
+  if (status === 403) {
+    return 'HTTP 403 // ORIGIN BLOCKED. This API rejects direct browser calls from foreign origins. Serve this page from an allowed origin, or route requests through your own backend proxy.';
+  }
+  if (status === 429) {
+    return 'HTTP 429 // RATE LIMIT EXCEEDED (20 req / 60s, 5 req / 10s). Wait for the Retry-After window, then try again.';
+  }
+  return 'HTTP ' + status + ': ' + (text || '').slice(0, 300);
+}
+
+async function fetchWithRetry(url, options, maxRetries = 2) {
+  let lastRes = null;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    lastRes = await fetch(url, options);
+    if (lastRes.status !== 429 || attempt === maxRetries) return lastRes;
+    const retryAfter = Math.min(parseInt(lastRes.headers.get('Retry-After') || '5', 10) || 5, 30);
+    showToast('RATE LIMIT // RETRY IN ' + retryAfter + 'S');
+    setStatus('RATE-LIMITED', true);
+    await new Promise(r => setTimeout(r, retryAfter * 1000));
+  }
+  return lastRes;
+}
+
+function renderMarkdown(text) {
+  if (!text) return '';
+  try {
+    const html = marked.parse(text, { breaks: true, gfm: true });
+    const clean = DOMPurify.sanitize(html, {
+      ADD_ATTR: ['target'],
+      ALLOWED_TAGS: ['h1','h2','h3','h4','h5','h6','p','br','hr','strong','em','b','i','u','code','pre','ul','ol','li','a','blockquote','table','thead','tbody','tr','th','td','span','div','del','sub','sup']
+    });
+    const div = document.createElement('div');
+    div.innerHTML = clean;
+    div.querySelectorAll('pre').forEach(pre => {
+      if (pre.querySelector('.code-copy-btn')) return;
+      const codeEl = pre.querySelector('code');
+      let lang = '';
+      if (codeEl && codeEl.className) {
+        const m = codeEl.className.match(/language-(\w+)/);
+        if (m) lang = m[1].toUpperCase();
+      }
+      const getCodeText = () => (codeEl || pre).innerText;
+      if (lang) {
+        const header = document.createElement('div');
+        header.className = 'code-header';
+        header.innerHTML = '<span>' + lang + '</span><button class="code-copy-btn">COPY</button>';
+        pre.parentNode.insertBefore(header, pre);
+        pre.classList.add('with-header');
+        header.querySelector('.code-copy-btn').onclick = (ev) => {
+          ev.stopPropagation();
+          navigator.clipboard.writeText(getCodeText());
+          header.querySelector('.code-copy-btn').textContent = 'COPIED';
+          setTimeout(() => header.querySelector('.code-copy-btn').textContent = 'COPY', 1500);
+        };
+      } else {
+        const btn = document.createElement('button');
+        btn.className = 'code-copy-btn';
+        btn.textContent = 'COPY';
+        btn.style.position = 'absolute';
+        btn.style.top = '8px';
+        btn.style.right = '8px';
+        btn.onclick = (ev) => {
+          ev.stopPropagation();
+          navigator.clipboard.writeText(getCodeText());
+          btn.textContent = 'COPIED';
+          setTimeout(() => btn.textContent = 'COPY', 1500);
+        };
+        pre.appendChild(btn);
+      }
+    });
+    return div.innerHTML;
+  } catch (e) {
+    return (text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+  }
+}
+
+function getCleanBubbleText(bubble) {
+  const clone = bubble.cloneNode(true);
+  clone.querySelectorAll('.code-copy-btn, .code-header, .typing-dots').forEach(n => n.remove());
+  return clone.innerText;
+}
+
+/* ===== SMART SCROLLING ===== */
+function isNearBottom() {
+  return chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight < 100;
+}
+
+function scrollToBottom(force) {
+  requestAnimationFrame(() => {
+    if (force || isNearBottom()) {
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+  });
+}
+
+chatArea.addEventListener('scroll', () => {
+  jumpBtn.classList.toggle('show', !isNearBottom());
+}, { passive: true });
+
+jumpBtn.addEventListener('click', () => {
+  chatArea.scrollTop = chatArea.scrollHeight;
+  jumpBtn.classList.remove('show');
+});
+
+/* ===== MOBILE DRAWER ===== */
+function openDrawer() {
+  sidebarEl.classList.add('open');
+  backdrop.classList.add('show');
+}
+
+function closeDrawer() {
+  sidebarEl.classList.remove('open');
+  backdrop.classList.remove('show');
+}
+
+menuBtn.addEventListener('click', openDrawer);
+backdrop.addEventListener('click', closeDrawer);
+
+/* ===== MODEL LIST ===== */
+function renderModelList() {
+  modelList.innerHTML = '';
+  Object.entries(MODELS).forEach(([id, m]) => {
+    const item = document.createElement('div');
+    item.className = 'model-item' + (id === currentModel ? ' active' : '');
+    item.innerHTML = `
+      <img class="model-logo" src="${m.logo}" alt="${m.name}" onerror="this.style.display='none'">
+      <span class="model-name">${m.name}</span>
+      <span class="model-badge">${m.badge}</span>
+    `;
+    item.onclick = () => selectModel(id);
+    modelList.appendChild(item);
+  });
+}
+
+function selectModel(id) {
+  if (isGenerating) {
+    showToast('Cannot switch while generating', 'error');
+    return;
+  }
+  currentModel = id;
+  const m = MODELS[id];
+  currentModelDisplay.textContent = m.display;
+  chipModel.textContent = id;
+  renderModelList();
+  closeDrawer();
+  showToast('Model: ' + m.name);
+}
+
+/* ===== MESSAGES ===== */
+function hideWelcome() {
+  const welcome = $('welcomeScreen');
+  if (welcome) welcome.style.display = 'none';
+}
+
+function addUserMessage(text) {
+  const msg = document.createElement('div');
+  msg.className = 'message user';
+  msg.innerHTML = `
+    <div class="avatar">YOU</div>
+    <div class="message-body">
+      <div class="message-header">You</div>
+      <div class="bubble">${escapeHtml(text).replace(/\n/g, '<br>')}</div>
+    </div>
+  `;
+  messagesWrap.appendChild(msg);
+  scrollToBottom(true);
+}
+
+function createAIMessage(modelId) {
+  const m = MODELS[modelId] || MODELS[currentModel];
+  const msg = document.createElement('div');
+  msg.className = 'message ai';
+  msg.innerHTML = `
+    <div class="avatar">
+      <img src="${m.logo}" alt="${m.name}" onerror="this.parentNode.textContent='AI'">
+    </div>
+    <div class="message-body">
+      <div class="message-header">
+        SENTINEL-X <span class="model-tag">via ${m.name}</span>
+      </div>
+      <div class="reasoning-block" style="display:none;">
+        <div class="reasoning-header">
+          <span>DEEP THINK PROCESS</span>
+          <span class="reasoning-chevron">&#9654;</span>
+        </div>
+        <div class="reasoning-body"></div>
+      </div>
+      <div class="bubble">
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+      </div>
+      <div class="message-actions">
+        <button class="msg-btn copy-msg-btn">COPY</button>
+        <button class="msg-btn download-msg-btn">DOWNLOAD</button>
+        <button class="msg-btn regen-btn">REGENERATE</button>
+      </div>
+    </div>
+  `;
+
+  const reasoningBlock = msg.querySelector('.reasoning-block');
+  const bubble = msg.querySelector('.bubble');
+
+  reasoningBlock.querySelector('.reasoning-header').onclick = () => {
+    reasoningBlock.classList.toggle('open');
+  };
+
+  msg.querySelector('.copy-msg-btn').onclick = () => {
+    const text = getCleanBubbleText(bubble);
+    navigator.clipboard.writeText(text).then(() => {
+      msg.querySelector('.copy-msg-btn').textContent = 'COPIED';
+      setTimeout(() => msg.querySelector('.copy-msg-btn').textContent = 'COPY', 1500);
+    });
+  };
+
+  msg.querySelector('.download-msg-btn').onclick = () => {
+    const text = getCleanBubbleText(bubble);
+    downloadText(`sentinel-x-${Date.now()}.md`, text);
+  };
+
+  msg.querySelector('.regen-btn').onclick = async () => {
+    if (isGenerating) return;
+    const lastUser = conversationHistory.filter(x => x.role === 'user').pop();
+    if (!lastUser) return;
+    conversationHistory = conversationHistory.slice(0, -1);
+    msg.remove();
+    await streamResponse(lastUser.content);
+  };
+
+  messagesWrap.appendChild(msg);
+  scrollToBottom(true);
+  return msg;
+}
+
+/* ===== DOWNLOAD ===== */
+function downloadText(filename, text) {
+  const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Downloaded: ' + filename);
+}
+
+function exportChat() {
+  if (conversationHistory.length <= 1) {
+    showToast('No messages to export', 'error');
+    return;
+  }
+  let md = '# SENTINEL-X Session Export\n\n';
+  md += '**Date:** ' + new Date().toISOString() + '\n';
+  md += '**Model:** ' + currentModel + '\n\n---\n\n';
+  conversationHistory.slice(1).forEach(m => {
+    const role = m.role === 'user' ? 'USER' : 'SENTINEL-X';
+    md += '## ' + role + '\n\n' + m.content + '\n\n---\n\n';
+  });
+  downloadText(`sentinel-x-session-${Date.now()}.md`, md);
+}
+
+/* ===== ROBUST API CALL ===== */
+async function streamResponse(userText) {
+  if (isGenerating) return;
+  isGenerating = true;
+  sendBtn.disabled = true;
+  setStatus('STREAMING', true);
+
+  hideWelcome();
+  addUserMessage(userText);
+  conversationHistory.push({ role: 'user', content: userText });
+
+  const aiMsg = createAIMessage(currentModel);
+  const bubble = aiMsg.querySelector('.bubble');
+  const reasoningBlock = aiMsg.querySelector('.reasoning-block');
+  const reasoningBody = aiMsg.querySelector('.reasoning-body');
+
+  let reasoningText = '';
+  let contentText = '';
+  let reasoningShown = false;
+
+  const payload = {
+    model: currentModel,
+    messages: conversationHistory,
+    stream: true
+  };
+
+  if (deepThinkToggle.checked) {
+    payload.reasoning_effort = 'high';
+    payload.thinking_enabled = true;
+  }
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + CONFIG.apiKey,
+    'User-Agent': CONFIG.userAgent,
+    'Accept': 'text/event-stream'
+  };
+
+  let streamSucceeded = false;
+
+  try {
+    const controller = new AbortController();
+    let idleTimer = null;
+    const resetIdle = () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => controller.abort(), 90000);
+    };
+    resetIdle();
+
+    const response = await fetchWithRetry(CONFIG.baseURL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+      mode: 'cors',
+      credentials: 'omit'
+    });
+
+    if (!response.ok) {
+      clearTimeout(idleTimer);
+      const errText = await response.text().catch(() => 'Unknown error');
+      throw new Error(friendlyError(response.status, errText));
+    }
+
+    if (!response.body) {
+      clearTimeout(idleTimer);
+      throw new Error('No response body (streaming not supported)');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      resetIdle();
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) continue;
+        if (line.startsWith(':')) continue; // keepalive
+        if (!line.startsWith('data:')) continue;
+
+        const data = line.slice(5).trim();
+        if (data === '[DONE]') continue;
+
+        try {
+          const parsed = JSON.parse(data);
+          const choice = parsed.choices && parsed.choices[0];
+          if (!choice) continue;
+          const delta = choice.delta || choice.message || {};
+
+          const reasoning = delta.reasoning_content || delta.reasoning || delta.thinking_content;
+          if (reasoning) {
+            reasoningText += reasoning;
+            if (!reasoningShown) {
+              reasoningBlock.style.display = 'block';
+              reasoningBlock.classList.add('open');
+              reasoningShown = true;
+            }
+            reasoningBody.textContent = reasoningText;
+            scrollToBottom(); // respects user scroll position
+          }
+
+          if (delta.content) {
+            contentText += delta.content;
+            bubble.innerHTML = renderMarkdown(contentText);
+            scrollToBottom(); // respects user scroll position
+          }
+        } catch (parseErr) {
+          // Skip malformed chunks
+        }
+      }
+    }
+
+    clearTimeout(idleTimer);
+    if (contentText) streamSucceeded = true;
+
+  } catch (err) {
+    console.error('Streaming error:', err);
+    if (!contentText) {
+      if (err.name === 'AbortError') {
+        contentText = '';
+      } else {
+        contentText = 'ERROR: ' + err.message;
+      }
+    }
+  }
+
+  /* Fallback: non-streaming request if streaming failed */
+  if (!streamSucceeded && !contentText.startsWith('ERROR:')) {
+    try {
+      setStatus('FALLBACK', true);
+      const fallbackPayload = {
+        model: currentModel,
+        messages: conversationHistory,
+        stream: false
+      };
+      if (deepThinkToggle.checked) {
+        fallbackPayload.reasoning_effort = 'high';
+        fallbackPayload.thinking_enabled = true;
+      }
+
+      const fbController = new AbortController();
+      const fbTimeout = setTimeout(() => fbController.abort(), 110000);
+
+      const fallbackResponse = await fetchWithRetry(CONFIG.baseURL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + CONFIG.apiKey,
+          'User-Agent': CONFIG.userAgent
+        },
+        body: JSON.stringify(fallbackPayload),
+        signal: fbController.signal
+      });
+
+      clearTimeout(fbTimeout);
+
+      if (fallbackResponse.ok) {
+        const data = await fallbackResponse.json();
+        const choice = data.choices && data.choices[0];
+        if (choice) {
+          const message = choice.message || choice.delta || {};
+          const r = message.reasoning_content || message.reasoning || message.thinking_content;
+          if (r) {
+            reasoningText = r;
+            reasoningBlock.style.display = 'block';
+            reasoningBlock.classList.add('open');
+            reasoningBody.textContent = reasoningText;
+          }
+          contentText = message.content || '';
+        } else if (data.content) {
+          contentText = data.content;
+        }
+      } else {
+        const errTxt = await fallbackResponse.text().catch(() => 'HTTP ' + fallbackResponse.status);
+        throw new Error(friendlyError(fallbackResponse.status, errTxt));
+      }
+    } catch (err) {
+      console.error('Fallback error:', err);
+      contentText = 'ERROR: Connection failed. ' + err.message + '\n\nVerify your network connection and try again, or switch to a different model.';
+    }
+  }
+
+  if (!contentText) {
+    contentText = 'WARNING: No content received from model. Please try again or switch models.';
+  }
+
+  try {
+    bubble.innerHTML = renderMarkdown(contentText);
+
+    if (reasoningText.length > 800 && reasoningBlock.classList.contains('open')) {
+      reasoningBlock.classList.remove('open');
+    }
+
+    conversationHistory.push({ role: 'assistant', content: contentText });
+    playBeep();
+    showToast('Response complete');
+  } finally {
+    isGenerating = false;
+    sendBtn.disabled = userInput.value.trim() === '';
+    setStatus('IDLE', false);
+    scrollToBottom();
+  }
+}
+
+/* ===== EVENT HANDLERS ===== */
+userInput.addEventListener('input', () => {
+  sendBtn.disabled = userInput.value.trim() === '' || isGenerating;
+  userInput.style.height = 'auto';
+  userInput.style.height = Math.min(userInput.scrollHeight, 200) + 'px';
+});
+
+userInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (!sendBtn.disabled) handleSend();
+  }
+});
+
+sendBtn.addEventListener('click', handleSend);
+
+async function handleSend() {
+  const text = userInput.value.trim();
+  if (!text || isGenerating) return;
+  userInput.value = '';
+  userInput.style.height = 'auto';
+  sendBtn.disabled = true;
+  await streamResponse(text);
+}
+
+deepThinkToggle.addEventListener('change', () => {
+  const on = deepThinkToggle.checked;
+  chipThink.querySelector('span:last-child').textContent = 'DEEP THINK: ' + (on ? 'ON' : 'OFF');
+  chipThink.classList.toggle('active', on);
+  showToast('Deep Think ' + (on ? 'enabled' : 'disabled'));
+});
+
+$('clearBtn').addEventListener('click', () => {
+  if (!confirm('Clear current session?')) return;
+  conversationHistory = [{ role: 'system', content: SYSTEM_PROMPT }];
+  const welcome = $('welcomeScreen');
+  if (welcome) welcome.style.display = '';
+  messagesWrap.querySelectorAll('.message').forEach(m => m.remove());
+  closeDrawer();
+  showToast('Session cleared');
+});
+
+$('newChatBtn').addEventListener('click', () => {
+  conversationHistory = [{ role: 'system', content: SYSTEM_PROMPT }];
+  const welcome = $('welcomeScreen');
+  if (welcome) welcome.style.display = '';
+  messagesWrap.querySelectorAll('.message').forEach(m => m.remove());
+  showToast('New session');
+});
+
+$('exportBtn').addEventListener('click', exportChat);
+
+document.querySelectorAll('.skill-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const prompt = card.dataset.prompt;
+    userInput.value = prompt;
+    userInput.dispatchEvent(new Event('input'));
+    userInput.focus();
+    closeDrawer();
+  });
+});
+
+document.body.addEventListener('click', () => {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}, { once: true });
+
+/* ===== INIT ===== */
+renderModelList();
+userInput.focus();
+</script>
+</body>
+</html>
