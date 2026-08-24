@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SENTINEL-X :: Cybersecurity Terminal</title>
+<link rel="icon" type="image/webp" href="https://tr.rbxcdn.com/180DAY-799144245728b5f8a735557862faa9b1/420/420/FrontAccessory/Webp/noFilter">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
+</head>
+<body>
+
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="brand-mark" id="brandMark">
+          <img src="https://tr.rbxcdn.com/180DAY-799144245728b5f8a735557862faa9b1/420/420/FrontAccessory/Webp/noFilter" alt="SENTINEL-X" onerror="this.remove(); document.getElementById('brandMark').classList.add('no-img');">
+          <span class="brand-fallback">SX</span>
+        </div>
+        <div class="brand-text">
+          <h1>SENTINEL-X</h1>
+          <div class="version">TERMINAL // V3.8</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-title">Models</div>
+      <div class="model-list" id="modelList"></div>
+    </div>
+
+    <div class="sidebar-controls">
+      <div class="control-row">
+        <div class="control-label">
+          <span class="dot warn"></span>
+          <span>Deep Think</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="deepThinkToggle">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div class="control-row">
+        <div class="control-label">
+          <span class="dot"></span>
+          <span>Audio Feedback</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="soundToggle" checked>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <button class="btn" id="exportBtn">
+        <span>Export Session</span>
+      </button>
+      <button class="btn danger" id="clearBtn">
+        <span>Clear Session</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="sidebar-backdrop" id="backdrop"></div>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-info">
+        <button class="icon-btn menu-btn" id="menuBtn" title="Menu">&#8801;</button>
+        <div class="status-indicator"></div>
+        <div class="topbar-title">
+          <span id="currentModelDisplay">QWEN 3.8 MAX PREVIEW</span> // SECURE LINK
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="chatsBtn" title="Saved Chats">&#9776;</button>
+        <button class="icon-btn" id="settingsBtn" title="Settings">&#9881;</button>
+        <button class="icon-btn" id="newChatBtn" title="New Session">+</button>
+      </div>
+    </div>
+
+    <div class="chat-area" id="chatArea">
+      <div class="messages-wrap" id="messagesWrap">
+        <div class="welcome" id="welcomeScreen">
+          <div class="welcome-badge">CYBERSECURITY MENTOR</div>
+          <h1>SENTINEL-<span class="accent-text">X</span></h1>
+          <p class="welcome-sub">
+            Elite penetration testing, network forensics, cryptography, and defensive security protocols.
+            Select a model from the sidebar to begin your training session.
+          </p>
+          <div class="skill-grid">
+            <div class="skill-card" data-prompt="Explain the TCP 3-way handshake in detail and demonstrate how to detect SYN flood attacks using Wireshark filters, including mitigation strategies">
+              <div class="skill-tag">NETWORK</div>
+              <h3>TCP Forensics</h3>
+              <p>Handshake analysis and SYN flood detection methodologies</p>
+            </div>
+            <div class="skill-card" data-prompt="Walk me through a safe SQL injection lab using DVWA, explaining each payload, the internal mechanism, and full mitigation with prepared statements">
+              <div class="skill-tag">WEB SECURITY</div>
+              <h3>SQLi Lab</h3>
+              <p>OWASP A03 testing with defensive countermeasures</p>
+            </div>
+            <div class="skill-card" data-prompt="Create a comprehensive Nmap scan methodology for a red team engagement including stealth techniques, detection signatures, and defensive countermeasures">
+              <div class="skill-tag">RED TEAM</div>
+              <h3>Reconnaissance</h3>
+              <p>Advanced scanning methodology and evasion</p>
+            </div>
+            <div class="skill-card" data-prompt="Design a SIEM correlation rule to detect lateral movement using Windows Event Logs, including the query logic and alert thresholds">
+              <div class="skill-tag">BLUE TEAM</div>
+              <h3>SIEM Detection</h3>
+              <p>Building correlation rules for threat hunting</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="jump-bottom" id="jumpBottom" title="Jump to latest">&darr;</button>
+
+    <div class="input-area">
+      <div class="input-wrap">
+        <div class="input-meta">
+          <span class="meta-chip active">
+            <span class="dot-mini"></span>
+            <span id="chipModel">qwen3.8-max-preview</span>
+          </span>
+          <span class="meta-chip" id="chipThink">
+            <span class="dot-mini"></span>
+            <span>DEEP THINK: OFF</span>
+          </span>
+          <span class="meta-chip" id="chipStatus">
+            <span class="dot-mini"></span>
+            <span>IDLE</span>
+          </span>
+        </div>
+        <textarea id="userInput" placeholder="Ask about penetration testing, network security, cryptography..." rows="1"></textarea>
+        <div class="input-footer">
+          <div class="input-hint">ENTER to send // SHIFT+ENTER for newline</div>
+          <button class="send-btn" id="sendBtn" disabled>&uarr;</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ===== SETTINGS MODAL ===== -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>&#9881; SETTINGS</h2>
+      <button class="modal-close" id="settingsClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <!-- AI Personalization -->
+      <div class="modal-section">
+        <div class="modal-section-title">AI PERSONALIZATION</div>
+        <div class="modal-label">
+          Customize the system prompt that defines SENTINEL-X's behavior. This will be prepended to every conversation.
+        </div>
+        <textarea class="modal-textarea" id="customPromptInput" placeholder="Enter your custom system prompt here... Leave blank to use the default cybersecurity mentor prompt."></textarea>
+        <div class="modal-hint">
+          Leave empty to use the default SENTINEL-X cybersecurity mentor prompt. Your custom prompt will replace the default system behavior.
+        </div>
+      </div>
+
+      <!-- Cybersecurity Skills -->
+      <div class="modal-section">
+        <div class="modal-section-title">CYBERSECURITY SKILLS</div>
+        <div class="modal-label">
+          Toggle specialized skill modules. Enabled skills inject focused expertise into the AI's knowledge base.
+        </div>
+        <div class="cyber-skills-grid" id="cyberSkillsGrid">
+          <div class="cyber-skill-chip" data-skill="penetration-testing">
+            <span class="skill-icon">&#128274;</span>
+            <span class="skill-name">Pen Testing</span>
+          </div>
+          <div class="cyber-skill-chip" data-skill="network-security">
+            <span class="skill-icon">&#128279;</span>
+            <span class="skill-name">Network Security</span>
+          </div>
+          <div class="cyber-skill-chip" data-skill="web-app-security">
+            <span class="skill-icon">&#127760;</span>
+            <span class="skill-name">Web App Security</span>
+          </div>
+          <div class="cyber-skill-chip" data-skill="malware-analysis">
+            <span class="skill-icon">&#128373;</span>
+            <span class="skill-name">Malware Analysis</span>
+          </div>
+          <div class="cyber-skill-chip" data-skill="cryptography">
+            <span class="skill-icon">&#128272;</span>
+            <span class="skill-name">Cryptography</span>
+          </div>
+          <div class="cyber-skill-chip" data-skill="digital-forensics">
+            <span class="skill-icon">&#128269;</span>
+            <span class="skill-name">Digital Forensics</span>
+          </div>
+          <div class="cyber-skill-chip" data-skill="cloud-security">
+            <span class="skill-icon">&#9729;</span>
+            <span class="skill-name">Cloud Security</span>
+          </div>
+          <div class="cyber-skill-chip" data-skill="social-engineering">
+            <span class="skill-icon">&#128483;</span>
+            <span class="skill-name">Social Engineering</span>
+          </div>
+          <div class="cyber-skill-chip" data-skill="incident-response">
+            <span class="skill-icon">&#128680;</span>
+            <span class="skill-name">Incident Response</span>
+          </div>
+          <div class="cyber-skill-chip" data-skill="reverse-engineering">
+            <span class="skill-icon">&#128295;</span>
+            <span class="skill-name">Reverse Engineering</span>
+          </div>
+          <div class="cyber-skill-chip" data-skill="osint">
+            <span class="skill-icon">&#128270;</span>
+            <span class="skill-name">OSINT</span>
+          </div>
+          <div class="cyber-skill-chip" data-skill="wireless-security">
+            <span class="skill-icon">&#128246;</span>
+            <span class="skill-name">Wireless Security</span>
+          </div>
+        </div>
+        <div class="cyber-skill-desc" id="skillDesc"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn secondary" id="settingsReset">RESET DEFAULTS</button>
+      <button class="modal-btn primary" id="settingsSave">SAVE SETTINGS</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CHATS PANEL ===== -->
+<div class="chats-panel" id="chatsPanel">
+  <div class="chats-panel-header">
+    <h2>SAVED CHATS</h2>
+    <button class="modal-close" id="chatsClose">&times;</button>
+  </div>
+  <div class="chats-panel-body" id="chatsList"></div>
+  <div class="chats-panel-footer">
+    <button class="btn" id="saveChatBtn">
+      <span>&#128190; SAVE CURRENT CHAT</span>
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
