@@ -1,0 +1,28 @@
+# =============================================
+# SENTINEL-X  —  Wrangler Config (Cloudflare Worker)
+# =============================================
+#
+# USAGE:
+#   1. npm install -g wrangler
+#   2. wrangler login
+#   3. wrangler secret put AI_API_KEY    # paste your real API key
+#   4. wrangler secret put TARGET_API     # type: https://gpt.crax.lol
+#   5. wrangler secret put ALLOWED_ORIGIN # type: https://yourusername.github.io  (or * )
+#   6. wrangler deploy
+#
+# After deploy, wrangler prints your worker URL.
+# Put that URL in app.js as WORKER_URL.
+#
+# =============================================
+
+name = "sentinel-proxy"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# Limits (free tier defaults)
+# [limits] is not needed for free tier — these are automatic.
+
+# If you want a custom domain instead of workers.dev:
+# [routes]
+# pattern = "api.yourdomain.com/*"
+# zone_name = "yourdomain.com"
